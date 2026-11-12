@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Static memory-corruption code-audit pipeline driven by LLM agents"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "Proprietary"}
+license = {text = "MIT"}
 authors = [{name = "utkarshpal"}]
 dependencies = [
     "click>=8.1",

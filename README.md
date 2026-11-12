@@ -13,7 +13,7 @@ and independently validate findings before acting on them.
 
 [Install](#install) · [Quick start](#quick-start) ·
 [How it works](#how-it-works) · [Runbook](docs/runbook-new-audit.md) ·
-[Known limitations](#known-limitations)
+[License](#license)
 
 ## How it works
 
@@ -889,34 +889,6 @@ no variable expansion — plain copy + `target_repo` rewrite. The
 `[prompt_overlay]` block is the only thing that needs to be tailored
 per attack surface; everything else is operator-tunable knobs.
 
-## Status
-
-**v0.1 — usable end-to-end.** Verified on real LLM round-trips:
-
-- ✅ Full audit cycle (12 auditors + per-result post-processing + post-commit challengers)
-- ✅ One-shot repair retry observed firing in production on a malformed first response
-- ✅ Crashed-cycle recovery (auto-marks `running` cycles as `aborted` on next start)
-- ✅ Per-thread SQLite connections (no contention, no corruption)
-- ✅ SDK-based dispatch via `github-copilot-sdk` — single long-lived
-  `CopilotClient` per process, fresh session per LLM call, model honored
-  per session (was ignored by the legacy `copilot --yolo -p` invocation)
-- ✅ Per-cycle log capture
-- ✅ Hybrid 6×2 cohort with cross-vendor pairing
-- ✅ Quorum detection on both CLAIMs and CLEANs (unit-tested; quorum-skip path
-  empirically saved 12 LLM calls/cycle in the all-CLEAN case)
-- ✅ All 4 out-of-band CLI commands wired (threat-model, generate-targets,
-  review-scope, analyze)
-- ✅ `suggest-overlay` auto-generates `[prompt_overlay]` blocks from
-  IDL + headers (single-shot or parallel-batched for large areas)
-- ✅ Multi-pass `threat-model --per-file` for scope expansion on areas >5KLOC
-- ✅ `generate-targets --aggregate` merges per-file threat models into one
-  target-generator call
-- ✅ Legacy git-commit corpus import
-- ✅ Target-agnostic prompts: bundled agent prompts contain no WebKit
-  hardcoding; per-workspace `[prompt_overlay]` block supplies the
-  trust-boundary framing (`{{ATTACKER_SURFACE}}` / `{{SCOPE_INCLUDES}}` /
-  `{{EXTRA_OUT_OF_SCOPE}}`)
-
 ## Roadmap
 
 - [x] **Skills system** — 6 webkit-*-audit playbooks shipped under `.github/skills/`
@@ -934,7 +906,7 @@ per attack surface; everything else is operator-tunable knobs.
 - [ ] Web dashboard (TUI works for now)
 - [ ] **Oracle: IDL→C++ symbol resolver** — merge `WebCore::IDLInterface::method` and
       `WebCore::CppImplClass::methodInternal` rows by parsing generated `JS<X>.cpp`
-      bindings (~150 LOC; see "Known limitations" below)
+      bindings (~150 LOC)
 - [ ] **Oracle: incremental Phase 2 builds** — currently rewalks all 10K TUs on
       `target_sha` change; should re-walk only TUs whose hash changed
 
@@ -944,57 +916,6 @@ If you have a compatible legacy audit branch, import it into a workspace
 with `autosearch import-git --from <target-repo> --branch <branch>`.
 Review imported findings before sharing the workspace.
 
-## Known limitations
-
-### Oracle Phase 2: parse-quality varies on heavily-templated WebKit code
-
-libclang occasionally fails to fully parse a WebKit TU (`tus_failed: 148
-/ 10345` on a recent full build). When this happens, the per-method
-facts for that TU's symbols are missing. This degrades but doesn't
-break the audit — affected methods just look like Phase-1-only entries
-(IDL exposure populated, Phase 2 fields empty). Common causes:
-- gcc-only `-W` flags clang doesn't recognize (autosearch strips the
-  known set in `oracles/libclang_pass.py:_GCC_ONLY_W_FLAGS` — extend
-  as needed)
-- missing `-isystem` for clang's builtin headers when libclang version
-  ≠ system clang version
-- WebKit's heavy template instantiation pushes clang into corner cases
-
-### Oracle: cross-layer naming gap (IDL ↔ C++)
-
-Phase 1 indexes methods by their **IDL interface name** (e.g.
-`WebCore::OffscreenCanvasRenderingContext2D::isPointInStroke`). Phase 2
-indexes by the actual **C++ qualified name** (e.g.
-`WebCore::CanvasRenderingContext2DBase::isPointInStrokeInternal`). Same
-physical method appears as **two separate keys** when the IDL identifier
-differs from the C++ implementation class name.
-
-Workaround: the auditor should query both forms when tracing
-JS surface → C++ implementation. Both rows are returned by separate
-`oracle_method_facts` calls.
-
-Proper fix (future): build an IDL→C++ resolver from the generated
-`JS<X>.cpp` files in the CDB, emit alias entries that merge both rows
-on lookup. ~150 LOC.
-
-### CG isn't built in the GTK port
-
-The `Source/WebCore/platform/graphics/cg/` directory is Cocoa-only.
-A WebKit GTK build's `compile_commands.json` doesn't include PathCG.cpp,
-ImageDecoderCG.cpp, etc. To exercise the CG audit corpus end-to-end
-against the libclang AST pass, you need a Cocoa CDB (`bear -- build-webkit
---release` on macOS).
-
-Phase 1 (IDL exposure) still works fine on a GTK build for cross-platform
-WebCore code.
-
-### `task_complete` and other CLI tools are agent-controlled
-
-The autosearch CLI itself is purely Click-based. The `task_complete` /
-`exit_plan_mode` references in this README's session logs come from the
-GitHub Copilot CLI agent that drives autosearch — not from autosearch
-itself.
-
 ## License
 
-Proprietary / personal research tool.
+Released under the [MIT License](LICENSE).

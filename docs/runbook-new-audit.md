@@ -409,4 +409,4 @@ first running cycle: ~$5-10.
 | `parse_failed` rate > 10% | Model drift / prompt issue | Check `autosearch agent list --state parse_failed` then `agent show <id>` to see what the LLM emitted |
 | Oracle queried but no `factsheet_citations` in cleans | Agents reading oracle but not citing in JSON | Phase 4 prompts updated; ensure oracle is loaded (look for log line); ensure auditor.md template has the citation schema |
 
-For more, see [Known limitations](../README.md#known-limitations).
+For more on the oracle, see [Oracles](../README.md#oracles-mechanical-ground-truth-via-sdk-tools).

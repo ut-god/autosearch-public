@@ -47,22 +47,10 @@ and independently validate findings before acting on them.
 
 ## Security research credits
 
-autosearch was used in research that led to the following Apple security
-credits for Utkarsh Pal:
-
-- **CVE-2026-43726** — WebKit use-after-free that could cause an unexpected
-  process crash, tracked as WebKit Bugzilla 313857. Apple credits Utkarsh
-  alongside other researchers in its
-  [iOS 18.7.10 and iPadOS 18.7.10 advisory](https://support.apple.com/en-us/148287)
-  and [visionOS 26.6 advisory](https://support.apple.com/en-us/128070).
-  Red Hat assigns a [CVSS v3.1 score of 6.5](https://access.redhat.com/security/cve/cve-2026-43726).
-- **CVE-2026-39872** — WebKit memory-handling issue that could cause an
-  unexpected process crash, tracked as WebKit Bugzilla 313528. Apple credits
-  Utkarsh and Ignacio Sanmillan in the
-  [Safari 26.5.2 advisory](https://support.apple.com/en-us/127685) and
-  [macOS Tahoe 26.5.2 advisory](https://support.apple.com/en-us/127595).
-- **Additional WebKit Canvas recognition** — Apple acknowledges Utkarsh
-  for assistance in its [Safari 27 advisory](https://support.apple.com/en-us/149039).
+[CVE-2026-43726](https://support.apple.com/en-us/148287) and
+[CVE-2026-39872](https://support.apple.com/en-us/127685) were found by
+Utkarsh Pal using autosearch. Apple also acknowledged Utkarsh for WebKit
+Canvas research in its [Safari 27 advisory](https://support.apple.com/en-us/149039).
 
 ## Repository layout
 

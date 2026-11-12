@@ -15,7 +15,7 @@ paths to match your own area.
 4. **(Optional) For full Phase-2 oracles**: libclang installed (see [README Install](../README.md#optional-libclang-for-phase-2-oracles))
 5. **(Optional) For full Phase-2 oracles**: a build of the target with
    `compile_commands.json` available (WebKit GTK auto-emits it via
-   `DEVELOPER_MODE=ON`; for other build systems see the [Oracles bootstrap matrix](../README.md#build))
+   `DEVELOPER_MODE=ON`; for other build systems see the [Oracles bootstrap matrix](reference.md#build))
 
 ## Decision: scripted bootstrap vs manual?
 
@@ -223,7 +223,7 @@ just printed to stdout for review.
 ## Step 5: Build the MethodFacts oracle (optional but recommended)
 
 The oracle gives auditors structured ground-truth about IDL exposure,
-singletons, callers, and thread protections — see [README Oracles section](../README.md#oracles-mechanical-ground-truth-via-sdk-tools).
+singletons, callers, and thread protections — see the [oracle reference](reference.md#oracles-mechanical-ground-truth-via-sdk-tools).
 
 ### 5a. Phase 1 only — fast (5 sec, no clang dep)
 
@@ -409,4 +409,4 @@ first running cycle: ~$5-10.
 | `parse_failed` rate > 10% | Model drift / prompt issue | Check `autosearch agent list --state parse_failed` then `agent show <id>` to see what the LLM emitted |
 | Oracle queried but no `factsheet_citations` in cleans | Agents reading oracle but not citing in JSON | Phase 4 prompts updated; ensure oracle is loaded (look for log line); ensure auditor.md template has the citation schema |
 
-For more on the oracle, see [Oracles](../README.md#oracles-mechanical-ground-truth-via-sdk-tools).
+For more on the oracle, see the [oracle reference](reference.md#oracles-mechanical-ground-truth-via-sdk-tools).

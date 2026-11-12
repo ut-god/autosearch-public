@@ -1,0 +1,43 @@
+# WebKit image-decoders campaign config.
+# `target_repo` is overwritten by `autosearch init --target <path>`.
+
+target_repo = "/path/to/WebKit"
+target_branch = "main"
+
+# Hybrid cohort: cohort_methods × cohort_models_per_method = total auditor runs.
+# Each method is audited by `cohort_models_per_method` distinct models from
+# `cohort_models`, preferring different vendors for cross-vendor quorum.
+cohort_methods             = 8
+cohort_models_per_method   = 2
+
+# Vendor pool for the auditor cohort.
+cohort_models = ["claude-opus-4.7", "gpt-5.4"]
+
+challenger_models = ["claude-opus-4.7", "gpt-5.4"]
+refinement_model  = "claude-opus-4.7"
+
+cycle_timeout_seconds           = 4500
+agent_timeout_seconds           = 1500
+chain_slot_enabled              = true
+pre_commit_challenge_enabled    = true
+
+dispatch_command = "copilot"
+dispatch_args    = ["--yolo", "-p"]
+
+# ----------------------------------------------------------------------
+# Prompt overlay: workspace-specific framing of the trust boundary.
+# Substituted into ALL agent prompts as {{ATTACKER_SURFACE}},
+# {{SCOPE_INCLUDES}}, {{EXTRA_OUT_OF_SCOPE}}.
+# Replace these for non-WebKit campaigns.
+# ----------------------------------------------------------------------
+
+[prompt_overlay]
+
+attacker_surface = """renderer-reachable JS / HTML / IDL entry points (e.g. <img src=>, CSS background-image, fetch(), createImageBitmap(), <canvas>.drawImage(), HTMLImageElement.decode())"""
+
+scope_includes = """Includes C library callbacks from libpng/libjpeg/libwebp/libavif/libjxl,
+ICC/LCMS color transforms, SharedBuffer segment arithmetic, and
+ImageBackingStore pixel writes."""
+
+extra_out_of_scope = """  - Pure origin / CSP / cookie / web-platform issues"""
+

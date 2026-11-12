@@ -1,0 +1,47 @@
+# WebCodecs campaign config.
+# `target_repo` is overwritten by `autosearch init --target <path>`.
+
+target_repo = "/path/to/WebKit"
+target_branch = "main"
+
+# Hybrid cohort: cohort_methods × cohort_models_per_method = total auditor runs.
+cohort_methods           = 8
+cohort_models_per_method = 2
+
+cohort_models     = ["claude-opus-4.7", "gpt-5.4"]
+challenger_models = ["claude-opus-4.7", "gpt-5.4"]
+refinement_model  = "claude-opus-4.7"
+
+cycle_timeout_seconds        = 4500
+agent_timeout_seconds        = 1500
+chain_slot_enabled           = true
+pre_commit_challenge_enabled = true
+
+dispatch_command = "copilot"
+dispatch_args    = ["--yolo", "-p"]
+
+# ----------------------------------------------------------------------
+# Prompt overlay: workspace-specific framing of the trust boundary.
+# ----------------------------------------------------------------------
+
+[prompt_overlay]
+
+attacker_surface = """JS WebCodecs API entry points carrying attacker-controlled bytes / frames / chunks:
+new VideoFrame(ImageBitmapSource | data, init) / videoFrame.copyTo(buffer, options) /
+new AudioData({data, format, sampleRate, ...}) / audioData.copyTo(buffer, options) /
+new VideoDecoder({output, error}).configure(config) + .decode(EncodedVideoChunk) /
+new AudioDecoder({output, error}).configure(config) + .decode(EncodedAudioChunk) /
+new VideoEncoder({output, error}).configure(config) + .encode(VideoFrame, options) /
+new AudioEncoder({output, error}).configure(config) + .encode(AudioData) /
+EncodedVideoChunk / EncodedAudioChunk constructors with attacker-supplied byte buffers"""
+
+scope_includes = """Includes: BufferSource (ArrayBuffer / ArrayBufferView) ingestion paths,
+internal decoder/encoder dispatch (GStreamer, AVFoundation, Cocoa, libwebrtc, Cocoa VideoToolbox),
+underlying codec libraries (libvpx, libdav1d, libaom, FFmpeg, OpenH264) reachable via
+the internal decoder/encoder factories, the WebCodecsBase control-message queue,
+async script-context callbacks (output/error), and pixel-layout / plane-layout
+arithmetic in WebCodecsVideoFrameAlgorithms."""
+
+extra_out_of_scope = """  - Pure codec-spec / bitstream-validity issues that don't reach memory
+  - GPU-process IPC marshalling (separate IPC campaign)
+  - WebRTC / MediaStreamTrack interop (separate Modules/mediastream campaign)"""

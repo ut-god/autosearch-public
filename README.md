@@ -65,8 +65,8 @@ as read-only.
 ## Install
 
 ```bash
-git clone https://github.com/ut-god/autoseach-public.git
-cd autoseach-public
+git clone https://github.com/ut-god/autoseach-public-clean.git
+cd autoseach-public-clean
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .

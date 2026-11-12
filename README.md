@@ -45,6 +45,25 @@ and independently validate findings before acting on them.
 > agent logs. Audit only code you are authorized to share, protect workspace
 > data, and check model usage and costs before a large run.
 
+## Security research credits
+
+autosearch was used in research that led to the following Apple security
+credits for Utkarsh Pal:
+
+- **CVE-2026-43726** — WebKit use-after-free that could cause an unexpected
+  process crash, tracked as WebKit Bugzilla 313857. Apple credits Utkarsh
+  alongside other researchers in its
+  [iOS 18.7.10 and iPadOS 18.7.10 advisory](https://support.apple.com/en-us/148287)
+  and [visionOS 26.6 advisory](https://support.apple.com/en-us/128070).
+  Red Hat assigns a [CVSS v3.1 score of 6.5](https://access.redhat.com/security/cve/cve-2026-43726).
+- **CVE-2026-39872** — WebKit memory-handling issue that could cause an
+  unexpected process crash, tracked as WebKit Bugzilla 313528. Apple credits
+  Utkarsh and Ignacio Sanmillan in the
+  [Safari 26.5.2 advisory](https://support.apple.com/en-us/127685) and
+  [macOS Tahoe 26.5.2 advisory](https://support.apple.com/en-us/127595).
+- **Additional WebKit Canvas recognition** — Apple acknowledges Utkarsh
+  for assistance in its [Safari 27 advisory](https://support.apple.com/en-us/149039).
+
 ## Repository layout
 
 ```
@@ -888,27 +907,6 @@ Adding a template = `mkdir templates/<name> && cp <files>`. No Jinja,
 no variable expansion — plain copy + `target_repo` rewrite. The
 `[prompt_overlay]` block is the only thing that needs to be tailored
 per attack surface; everything else is operator-tunable knobs.
-
-## Roadmap
-
-- [x] **Skills system** — 6 webkit-*-audit playbooks shipped under `.github/skills/`
-- [x] **Per-role custom agents** — 10 SDK custom agents with per-role skill scoping
-- [x] **MethodFacts oracle** — Phase 1 (IDL exposure), Phase 2 (libclang AST), Phase 3 (citation enforcement), Phase 4 (skill prompts)
-- [x] **WRONG_BUG_CLASS adjudication fix** — preserves real bugs through validator label disputes
-- [x] **Pre-commit challenger flow** — validator + challenger pipeline for claims
-- [ ] Tests for `parse.py`, `score.py`, `render.py`, `import_git.py`
-- [ ] Refinement on cleans (currently only fires when claims present)
-- [ ] Per-method-pair barriers in the cohort dispatch (saves another ~1m wall)
-- [ ] Cycle-level scheduling (auto-run analyst every 10, scope-reviewer every 25)
-- [ ] Direct Anthropic / OpenAI dispatchers via the SDK's custom-provider
-      hook (`ProviderConfig`) — skip the Copilot routing layer entirely
-      for cost-sensitive production runs
-- [ ] Web dashboard (TUI works for now)
-- [ ] **Oracle: IDL→C++ symbol resolver** — merge `WebCore::IDLInterface::method` and
-      `WebCore::CppImplClass::methodInternal` rows by parsing generated `JS<X>.cpp`
-      bindings (~150 LOC)
-- [ ] **Oracle: incremental Phase 2 builds** — currently rewalks all 10K TUs on
-      `target_sha` change; should re-walk only TUs whose hash changed
 
 ## Importing an existing corpus
 

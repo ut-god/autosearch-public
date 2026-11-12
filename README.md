@@ -1,49 +1,11 @@
 # autosearch
 
-**A static memory-safety audit pipeline powered by LLM agents.**
+**Find and investigate memory-safety bugs with a structured, LLM-driven audit pipeline.**
 
 autosearch coordinates specialized agents to examine source code, challenge
-potential findings, and track results in a queryable SQLite database. A Python
-orchestrator manages the workflow; a separate workspace holds each campaign's
-configuration, targets, findings, and logs.
-
-It is designed for static analysis: it does not execute the target program,
-run a fuzzer, or verify findings with ASan. **LLM output can be wrong**—review
-and independently validate findings before acting on them.
-
-[Install](#install) · [Quick start](#quick-start) ·
-[How it works](#how-it-works) · [Runbook](docs/runbook-new-audit.md) ·
-[License](#license)
-
-## How it works
-
-1. **Scope an audit.** Create a workspace for a target repository and add or
-   generate a list of methods to inspect.
-2. **Audit and challenge.** The orchestrator dispatches auditors and runs
-   validation, challenge, or clean-check steps as appropriate. Multiple models
-   can audit a method in parallel.
-3. **Record and refine.** Results, agent runs, and campaign state are stored
-   in SQLite. Rules and mitigations can evolve as the audit progresses.
-4. **Inspect and repeat.** Browse findings from the CLI, monitor cycles in the
-   terminal UI, and expand or review scope as needed.
-
-### Highlights
-
-- **Structured workflow:** specialized agents with machine-readable output
-  coordinated by a deterministic scheduler.
-- **Parallel, configurable cohorts:** use multiple models and optional
-  cross-vendor agreement to reduce redundant verification steps.
-- **Persistent workspaces:** keep findings, configuration, prompts, and logs
-  separate from the target source tree.
-- **Re-auditing when rules change:** targets can become eligible again when
-  the catalog or mitigation epoch changes.
-- **Optional source oracles:** provide agents with mechanically extracted
-  facts such as IDL exposure and, with libclang, caller and global information.
-
-> **Privacy and cost:** audit prompts can contain target source code and are
-> sent to the configured model provider. Workspaces also retain findings and
-> agent logs. Audit only code you are authorized to share, protect workspace
-> data, and check model usage and costs before a large run.
+potential findings, and record results in a queryable SQLite database. A
+Python orchestrator manages each audit, while a separate workspace keeps its
+targets, findings, configuration, and logs together.
 
 ## Security research credits
 
@@ -52,65 +14,53 @@ and independently validate findings before acting on them.
 Utkarsh Pal using autosearch. Apple also acknowledged Utkarsh for WebKit
 Canvas research in its [Safari 27 advisory](https://support.apple.com/en-us/149039).
 
+[Install](#install) · [Quick start](#quick-start) ·
+[How it works](#how-it-works) · [Runbook](docs/runbook-new-audit.md) ·
+[License](#license)
+
+## How it works
+
+1. **Define the scope:** create a workspace for a target repository and add or
+   generate the methods you want to audit.
+2. **Audit and challenge:** run multiple models in parallel, then use
+   validation, challenger, and clean-check agents to examine their conclusions.
+3. **Track and refine:** store findings and agent runs in SQLite, and update
+   audit rules and mitigations as the campaign progresses.
+4. **Review and repeat:** inspect findings in the CLI, monitor cycles in the
+   terminal UI, and expand or revisit the audit scope.
+
+### Highlights
+
+- **Specialized agents** with structured output and a deterministic scheduler.
+- **Parallel, configurable model cohorts** with cross-vendor quorum checks.
+- **Persistent workspaces** for findings, configuration, prompts, and logs.
+- **Epoch-aware re-auditing** when the catalog or mitigations change.
+- **Optional source oracles** for IDL exposure, callers, and global state.
+
+autosearch performs static analysis; it does not execute the target program,
+fuzz it, or verify findings with ASan. LLM conclusions can be wrong, so
+independently review and validate findings before acting on them.
+
+> **Privacy and cost:** audit prompts can contain target source code and are
+> sent to the configured model provider. Workspaces also retain findings and
+> agent logs. Audit only code you are authorized to share, protect workspace
+> data, and check model usage and costs before a large run.
+
 ## Repository layout
 
-```
-autosearch/                          this repo (the tool)
-├── pyproject.toml
-├── README.md                        this file
-├── src/autosearch/
-│   ├── cli.py                       click-based `autosearch` command
-│   ├── orchestrator.py              cycle scheduler
-│   ├── agent_invoke.py              shared render → dispatch → parse → repair → record
-│   ├── dispatch.py                  github-copilot-sdk adapter (long-lived client + per-call session)
-│   ├── parse.py                     strict JSON extractor + one-shot repair
-│   ├── render.py                    {{TOKEN}} placeholder substitution
-│   ├── score.py                     per-cycle scoring
-│   ├── status.py                    heartbeat for TUI
-│   ├── import_git.py                legacy `[autosearch]` commit importer
-│   ├── agents/                      LLM agent prompts (markdown, strict-JSON output)
-│   │   ├── auditor.md               6 per cycle (3 Anthropic + 3 OpenAI)
-│   │   ├── validator.md             1 per CLAIM, opposite vendor
-│   │   ├── challenger.md            1 round per CLAIM (2 vendors, parallel) — was pre+post commit, merged
-│   │   ├── clean-check.md           1 per CLEAN (skipped on cross-vendor agreement)
-│   │   ├── refinement.md            1 per cycle (skipped on no-new-signal cycles:
-│   │   │                              no claim past auditor + no verified-clean guards)
-│   │   ├── threat-modeler.md        out-of-band: code → structured threat model
-│   │   ├── target-generator.md      out-of-band: threat model → targets.md entries
-│   │   ├── scope-reviewer.md        out-of-band: gate / retirement engine
-│   │   └── analyst.md               out-of-band: rejection-code mining
-│   ├── store/
-│   │   ├── schema.sql               13-table SQLite schema
-│   │   ├── db.py                    Store class (per-thread connections)
-│   │   └── workspace.py             config.toml loader + targets.md parser
-│   └── tui/
-│       └── app.py                   Textual live monitor
-└── templates/
-    └── webkit-image-decoders/       starter campaign configuration
-```
+| Path | Purpose |
+|---|---|
+| `src/autosearch/` | CLI, orchestrator, agents, storage, and terminal UI |
+| `.github/skills/` | WebKit memory-safety audit playbooks |
+| `templates/` | Starter configurations for audit workspaces |
+| `scripts/` | Workspace bootstrap tools |
+| `docs/` | Detailed guides and runbooks |
+| `tests/` | Automated tests |
 
-External, per campaign:
-
-```
-~/autosearch-workspaces/             one dir per campaign
-└── webkit-image-decoders/
-    ├── config.toml                  cohort, model mix, timeouts
-    ├── targets.md                   in-scope <Class::Method> entries
-    ├── rules/{catalog,mitigations}.md
-    ├── findings.db                  SQLite corpus, WAL mode
-    ├── threat-models/               saved threat-modeler outputs
-    ├── reports/                     analyst + scope-reviewer outputs
-    └── logs/
-        ├── autosearch.log           run log
-        ├── status.json              TUI heartbeat (atomic writes)
-        ├── cycles/<n>/              per-cycle prompt+response capture
-        │   ├── manifest.json
-        │   ├── 00001_auditor_auditor_m1na.json
-        │   └── ...
-        └── out-of-band/<cmd>-<ts>/  threat-model / analyze / etc. captures
-```
-
-The target repo (e.g. `~/code/WebKit`) is **read-only** to autosearch.
+Campaign workspaces are kept separately, by default under
+`~/autosearch-workspaces/`. Each contains its configuration, targets, rules,
+SQLite database, reports, and logs. The target source repository is treated
+as read-only.
 
 ## Install
 
@@ -123,11 +73,10 @@ pip install -e .
 autosearch --version
 ```
 
-Requirements: Python ≥3.9, an active GitHub Copilot subscription.
+Requirements: Python ≥3.9 and authenticated GitHub Copilot access.
 Dispatch goes through the [`github-copilot-sdk`](https://pypi.org/project/github-copilot-sdk/)
-Python package (installed automatically as a dependency) which bundles
-the Copilot CLI binary — you do **not** need to install or authenticate
-the `copilot` CLI separately, the SDK handles startup and login.
+Python package, which is installed as a dependency and manages the Copilot
+CLI process.
 
 The dispatcher (`src/autosearch/dispatch.py`) keeps a single
 `CopilotClient` warm per orchestrator process and opens a short-lived
